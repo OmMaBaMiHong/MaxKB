@@ -32,6 +32,8 @@ class Config(dict):
         "LOCAL_MODEL_PORT": "11636",
         "LOCAL_MODEL_PROTOCOL": "http",
         "LOCAL_MODEL_HOST_WORKER": 1,
+        # 产品改造：内置本地模型服务默认不启动（省内存），需要时置 true
+        "LOCAL_MODEL_ENABLED": False,
         # 语言
         "LANGUAGE_CODE": "zh-CN",
         "DEBUG": False,

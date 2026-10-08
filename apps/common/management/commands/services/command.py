@@ -4,6 +4,8 @@ import os
 from django.core.management.base import BaseCommand
 from django.db.models import TextChoices
 
+from maxkb.const import CONFIG
+
 from .utils import ServicesUtil
 
 
@@ -29,7 +31,10 @@ class Services(TextChoices):
 
     @classmethod
     def web_services(cls):
-        return [cls.gunicorn, cls.local_model]
+        # 内置本地模型服务默认不随 web 启动（embedding 走外部 API 时无需常驻模型进程）
+        if str(CONFIG.get('LOCAL_MODEL_ENABLED', False)).lower() in ('true', '1'):
+            return [cls.gunicorn, cls.local_model]
+        return [cls.gunicorn]
 
     @classmethod
     def celery_services(cls):
