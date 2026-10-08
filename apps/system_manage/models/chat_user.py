@@ -20,6 +20,8 @@ class ChatUser(models.Model):
     username = models.CharField(max_length=150, unique=True, verbose_name="用户名", db_index=True)
     password = models.CharField(max_length=150, verbose_name="密码")
     source = models.CharField(max_length=10, verbose_name="来源", default="LOCAL", db_index=True)
+    # 产品改造：外部统一用户ID（sub2api），同源贯穿所有产品；NULL=本地自建用户
+    external_user_id = models.CharField(max_length=128, null=True, blank=True, unique=True, verbose_name="外部统一用户ID")
     is_active = models.BooleanField(default=True, db_index=True)
     create_time = models.DateTimeField(verbose_name="创建时间", auto_now_add=True, null=True, db_index=True)
     update_time = models.DateTimeField(verbose_name="修改时间", auto_now=True, null=True, db_index=True)

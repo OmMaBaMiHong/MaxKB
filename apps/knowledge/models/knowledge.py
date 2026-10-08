@@ -139,10 +139,15 @@ class Knowledge(AppModelMixin):
     embedding_model = models.ForeignKey(Model, on_delete=models.SET_NULL, db_constraint=False, blank=True, null=True)
     file_size_limit = models.IntegerField(verbose_name="文件大小限制", default=100)
     file_count_limit = models.IntegerField(verbose_name="文件数量限制", default=50)
+    # 产品改造：属主外部用户ID（sub2api）。租户矩阵 = workspace(产品) × owner_user_id(用户)
+    owner_user_id = models.CharField(max_length=128, default="", db_index=True, verbose_name="属主外部用户ID")
     meta = models.JSONField(verbose_name="元数据", default=dict)
 
     class Meta:
         db_table = "knowledge"
+        indexes = [
+            models.Index(fields=["workspace_id", "owner_user_id"], name="knowledge_ws_owner_idx"),
+        ]
 
 
 class KnowledgeWorkflow(AppModelMixin):
