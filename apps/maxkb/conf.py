@@ -34,6 +34,8 @@ class Config(dict):
         "LOCAL_MODEL_HOST_WORKER": 1,
         # 产品改造：内置本地模型服务默认不启动（省内存），需要时置 true
         "LOCAL_MODEL_ENABLED": False,
+        # 产品改造：矩阵租户上下文共享密钥（与 Chaos 网关一致），空=关闭 C 端开放面认证
+        "PRODUCT_TENANT_SECRET": "",
         # 语言
         "LANGUAGE_CODE": "zh-CN",
         "DEBUG": False,
