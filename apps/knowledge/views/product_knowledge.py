@@ -15,6 +15,7 @@ from common.auth.product_tenant import ProductTenantAuthentication
 from common.exception.app_exception import AppApiException
 from common import result
 from knowledge.models import Knowledge
+from knowledge.serializers.knowledge import KnowledgeSerializer
 
 
 def _tenant_queryset(request: Request):
@@ -95,7 +96,9 @@ class ProductKnowledgeOperateView(APIView):
         return result.success(_detail(obj))
 
     def delete(self, request: Request, knowledge_id: str):
-        obj = self._get(request, knowledge_id)
-        detail = _detail(obj)
-        obj.delete()
-        return result.success(detail)
+        knowledge = self._get(request, knowledge_id)
+        # 委托既有删除管线：段落/问题/向量索引/文件/资源映射 一并清理
+        KnowledgeSerializer.Operate(
+            data={"workspace_id": knowledge.workspace_id, "knowledge_id": knowledge_id}
+        ).delete()
+        return result.success(True)
