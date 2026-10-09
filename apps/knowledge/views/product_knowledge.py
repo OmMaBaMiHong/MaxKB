@@ -96,9 +96,16 @@ class ProductKnowledgeOperateView(APIView):
         return result.success(_detail(obj))
 
     def delete(self, request: Request, knowledge_id: str):
+        import uuid as _uuid
+
         knowledge = self._get(request, knowledge_id)
-        # 委托既有删除管线：段落/问题/向量索引/文件/资源映射 一并清理
+        # 委托既有删除管线：段落/问题/向量索引/文件/资源映射 一并清理。
+        # Operate 声明 user_id 必填但 delete 逻辑不使用（B 端传操作者管理员），产品面以随机 UUID 过字段校验
         KnowledgeSerializer.Operate(
-            data={"workspace_id": knowledge.workspace_id, "knowledge_id": knowledge_id}
+            data={
+                "workspace_id": knowledge.workspace_id,
+                "knowledge_id": knowledge_id,
+                "user_id": str(_uuid.uuid4()),
+            }
         ).delete()
         return result.success(True)

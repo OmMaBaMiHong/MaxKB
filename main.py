@@ -100,8 +100,16 @@ def dev():
 
 
 if __name__ == '__main__':
-    os.environ['HF_HOME'] = '/opt/maxkb-app/model/base'
-    os.environ['TMPDIR'] = '/opt/maxkb-app/tmp'
+    # 产品改造：/opt/maxkb-app 为容器内布局；容器外开发回落到仓库内 .runtime，
+    # 已有环境变量时（安装器/部署注入）不覆盖
+    if not os.environ.get('HF_HOME'):
+        os.environ['HF_HOME'] = (
+            '/opt/maxkb-app/model/base' if os.path.isdir('/opt/maxkb-app')
+            else os.path.join(BASE_DIR, '.runtime/model/base'))
+    if not os.environ.get('TMPDIR'):
+        os.environ['TMPDIR'] = (
+            '/opt/maxkb-app/tmp' if os.path.isdir('/opt/maxkb-app')
+            else os.path.join(BASE_DIR, '.runtime/tmp'))
     if not os.environ.get('MAXKB_SECRET_KEY'):
         os.environ['MAXKB_SECRET_KEY'] = get_random_secret_key()
     parser = argparse.ArgumentParser(

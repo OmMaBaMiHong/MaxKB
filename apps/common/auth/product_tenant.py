@@ -10,10 +10,10 @@
 import time
 from dataclasses import dataclass
 
+from django.core import signing
 from django.utils.translation import gettext_lazy as _
 from rest_framework.authentication import TokenAuthentication
 
-from common import signing
 from common.exception.app_exception import AppAuthenticationFailed
 from maxkb.const import CONFIG
 
@@ -39,8 +39,11 @@ class ProductTenantContext:
             # L3：超管默认全量，可显式按用户收敛（跨产品）
             return {"owner_user_id": owner_user_id} if owner_user_id else {}
         if self.role == ROLE_PRODUCT_ADMIN:
-            # L1：产品内全部
-            return {"workspace_id": self.product_id}
+            # L1：产品内全量；显式 owner_user_id 时下钻到 L2（产品内按用户）
+            filters = {"workspace_id": self.product_id}
+            if owner_user_id:
+                filters["owner_user_id"] = owner_user_id
+            return filters
         # C 端用户永远双过滤：自己的产品 + 自己；显式指定他人属主直接拒绝
         if owner_user_id and owner_user_id != self.user_id:
             raise AppAuthenticationFailed(1403, _("无权访问其他用户的数据"))

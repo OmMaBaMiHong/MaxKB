@@ -59,12 +59,12 @@ class ProductDocumentView(APIView):
         if knowledge.embedding_model_id is None:
             raise AppApiException(400, _("该知识库尚未绑定向量化模型，请先绑定模型再上传文档"))
         paragraphs = get_split_model("web.md").parse(content)
-        # 委托既有管线：段落落库、问题关联、@post 向量化（celery 异步）
-        _, document_id, _ = DocumentSerializers.Create(
+        # 委托既有管线：段落切分、问题关联、@post 向量化（celery 异步）。
+        # 注意：@post 装饰后 save() 返回单个 detail dict；且本函数不得再用 `_` 作解包名（会遮蔽 gettext 的 `_`）
+        detail = DocumentSerializers.Create(
             data={"knowledge_id": str(knowledge.id)}
         ).save(instance={"name": name[:150], "paragraphs": paragraphs})
-        document = Document.objects.get(id=document_id)
-        return result.success(_detail(document))
+        return result.success(detail)
 
 
 class ProductDocumentOperateView(APIView):
