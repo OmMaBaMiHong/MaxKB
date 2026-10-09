@@ -33,7 +33,10 @@ admin_api_prefix = CONFIG.get_admin_path()[1:] + '/api/'
 admin_ui_prefix = CONFIG.get_admin_path()
 chat_api_prefix = CONFIG.get_chat_path()[1:] + '/api/'
 chat_ui_prefix = CONFIG.get_chat_path()
+# 产品×用户矩阵租户（C 端开放面）：认证走 ProductTenantAuthentication，与 B 端管理面前缀完全隔离
+product_api_prefix = 'product-api/api/'
 urlpatterns = [
+    path(product_api_prefix, include("knowledge.urls_product")),
     path(admin_api_prefix, include("users.urls")),
     path(admin_api_prefix, include("tools.urls")),
     path(admin_api_prefix, include("models_provider.urls")),
