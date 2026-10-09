@@ -26,6 +26,18 @@ def _tenant_queryset(request: Request):
     )
 
 
+def _knowledge_for(request: Request, knowledge_id: str) -> Knowledge:
+    """按租户矩阵取知识库；不存在或越权一律 404（不暴露存在性）。"""
+    ctx = request.product_tenant
+    obj = Knowledge.objects.filter(
+        id=knowledge_id,
+        **ctx.knowledge_filters(owner_user_id=request.query_params.get("owner_user_id")),
+    ).first()
+    if obj is None:
+        raise AppApiException(1404, _("知识库不存在或无权访问"))
+    return obj
+
+
 def _detail(obj: Knowledge) -> dict:
     return {
         "id": str(obj.id),
@@ -64,14 +76,7 @@ class ProductKnowledgeOperateView(APIView):
     authentication_classes = [ProductTenantAuthentication]
 
     def _get(self, request: Request, knowledge_id: str) -> Knowledge:
-        ctx = request.product_tenant
-        obj = Knowledge.objects.filter(
-            id=knowledge_id,
-            **ctx.knowledge_filters(owner_user_id=request.query_params.get("owner_user_id")),
-        ).first()
-        if obj is None:
-            raise AppApiException(1404, _("知识库不存在或无权访问"))
-        return obj
+        return _knowledge_for(request, knowledge_id)
 
     def get(self, request: Request, knowledge_id: str):
         return result.success(_detail(self._get(request, knowledge_id)))
