@@ -95,7 +95,7 @@ TEMPLATES = [
      },
 ]
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'MaxKB API',
+    'TITLE': 'ChaosSea Knowledge API',
     'DESCRIPTION': _('Intelligent customer service platform'),
     'VERSION': 'v2',
     'SERVE_INCLUDE_SCHEMA': False,

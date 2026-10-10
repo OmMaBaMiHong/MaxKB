@@ -37,7 +37,7 @@ export const defaultSetting = {
   icon: '',
   loginLogo: '',
   loginImage: '',
-  title: 'MaxKB',
+  title: '混沌海',
   slogan: t('theme.defaultSlogan'),
 }
 
@@ -47,7 +47,7 @@ export const defaultPlatformSetting = {
   showForum: true,
   forumUrl: t('layout.forumUrl'),
   showProject: true,
-  projectUrl: 'https://github.com/1Panel-dev/MaxKB',
+  projectUrl: 'https://github.com/OmMaBaMiHong/MaxKB',
 }
 
 export function hexToRgba(hex?: string, alpha?: number) {
