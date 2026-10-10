@@ -1,0 +1,14 @@
+{
+  "document": {"name": "伤寒论·评测摘录", "book": "伤寒论", "split": {"mode": "tcm"}},
+  "content": "辨太阳病脉证并治\n1. 太阳之为病，脉浮，头项强痛而恶寒。\n2. 太阳病，发热，汗出，恶风，脉缓者，名为中风。\n3. 太阳病，或已发热，或未发热，必恶寒，体痛，呕逆，脉阴阳俱紧者，名为伤寒。\n\n桂枝汤方：\n桂枝三两 芍药三两 甘草二两 生姜三两 大枣十二枚\n上五味，以水七升，煮取三升，温服一升。主治太阳中风，头痛发热，汗出恶风。\n\n35. 太阳病，头痛发热，身疼腰痛，骨节疼痛，恶风，无汗而喘者，麻黄汤主之。\n\n麻黄汤方：\n麻黄三两 桂枝二两 杏仁七十个 甘草一两\n上四味，以水九升，煮取二升半，温服八合。\n\n辨阳明病脉证并治\n182. 阳明病外证云何？答曰：身热，汗自出，不恶寒，反恶热也。\n\n白虎汤方：\n知母六两 石膏一斤 甘草二两 粳米六合\n上四味，煮米熟汤成，主治阳明热盛，烦渴引饮。",
+  "cases": [
+    {"query": "桂枝汤的组成", "mode": "keywords", "expect_keyword": "桂枝"},
+    {"query": "发热汗出恶风", "mode": "keywords", "expect_keyword": "汗出"},
+    {"query": "麻黄汤主之", "mode": "keywords", "expect_keyword": "麻黄"},
+    {"query": "阳明热盛烦渴", "mode": "keywords", "expect_keyword": "石膏"},
+    {"query": "太阳病脉浮", "mode": "keywords", "expect_keyword": "太阳"},
+    {"query": "无汗而喘", "mode": "keywords", "expect_keyword": "无汗"}
+  ],
+  "expect_blocks_min": 8,
+  "hit_at_k": 3
+}

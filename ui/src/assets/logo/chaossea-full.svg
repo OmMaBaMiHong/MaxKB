@@ -1,0 +1,16 @@
+<svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="csSeaFull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16244A"/>
+      <stop offset="1" stop-color="#2E7D8C"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="52" fill="url(#csSeaFull)"/>
+  <circle cx="60" cy="45" r="13" fill="#F5D06F"/>
+  <circle cx="60" cy="45" r="6.5" fill="#FFF7DC"/>
+  <path d="M18 72 Q 34 64 50 72 T 82 72 T 102 72" stroke="#BFE3EA" stroke-width="6" fill="none" stroke-linecap="round" opacity=".95"/>
+  <path d="M24 88 Q 40 80 56 88 T 90 88" stroke="#8CC7D4" stroke-width="6" fill="none" stroke-linecap="round" opacity=".75"/>
+  <path d="M32 104 Q 48 96 64 104 T 96 104" stroke="#5FA8B8" stroke-width="6" fill="none" stroke-linecap="round" opacity=".55"/>
+  <text x="130" y="66" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="52" font-weight="700" fill="#16244A">混沌海</text>
+  <text x="132" y="98" font-family="Arial,sans-serif" font-size="18" letter-spacing="8" fill="#2E7D8C">CHAOSSEA</text>
+</svg>

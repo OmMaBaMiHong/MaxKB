@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from common.auth.product_tenant import ProductTenantAuthentication
 from common.exception.app_exception import AppApiException
 from common import result
+from common.handle.tcm_split import tcm_split
 from common.utils.split_model import get_split_model
 from knowledge.models import Document
 from knowledge.serializers.document import DocumentSerializers
@@ -58,7 +59,17 @@ class ProductDocumentView(APIView):
         # MaxKB 的 @post 钩子在创建后会触发向量化，模型未绑定时会抛错——前置拦截给出明确指引
         if knowledge.embedding_model_id is None:
             raise AppApiException(400, _("该知识库尚未绑定向量化模型，请先绑定模型再上传文档"))
-        paragraphs = get_split_model("web.md").parse(content)
+        # 领域切分（M2）：split.mode=tcm 走中医条文/方剂切分模板，块标题携带 书名·卷·篇·条号
+        split = payload.get("split") or {}
+        if isinstance(split, dict) and split.get("mode") == "tcm":
+            paragraphs = tcm_split(
+                content,
+                book=str(split.get("book") or name)[:64],
+                juan=str(split.get("juan") or ""),
+                pian=str(split.get("pian") or ""),
+            )
+        else:
+            paragraphs = get_split_model("web.md").parse(content)
         # 委托既有管线：段落切分、问题关联、@post 向量化（celery 异步）。
         # 注意：@post 装饰后 save() 返回单个 detail dict；且本函数不得再用 `_` 作解包名（会遮蔽 gettext 的 `_`）
         detail = DocumentSerializers.Create(
