@@ -2,27 +2,51 @@
 """
     @project: MaxKB
     @file: product_tenant.py
-    @desc: 产品×用户矩阵租户上下文（C 端开放面专用）
-           令牌由 Chaos 网关签发（django signing / HMAC，共享密钥 PRODUCT_TENANT_SECRET），
-           本服务只验证不签发；三层查询矩阵见 docs/project/kb-product-plan-2026-10-09.md：
+    @desc: 产品×用户矩阵租户上下文（C 端开放面专用）。
+           令牌 = 标准 JWT HS256（手动实现，零外部依赖），由 Chaos 网关
+           （apps/api/src/open/knowledge-gateway.ts）用共享密钥 KNOWLEDGE_TENANT_SECRET
+           签发，本服务只验签不签发用户令牌；三层查询矩阵见
+           docs/project/kb-product-plan-2026-10-09.md：
            L1 按产品查 / L2 产品下按用户查 / L3 超管按 User ID 跨产品查
 """
+import base64
+import hashlib
+import hmac
+import json
 import time
 from dataclasses import dataclass
 
-from django.core import signing
 from django.utils.translation import gettext_lazy as _
 from rest_framework.authentication import TokenAuthentication
 
 from common.exception.app_exception import AppAuthenticationFailed
 from maxkb.const import CONFIG
 
-TENANT_SALT = "kb.product.tenant"
-# 角色：user=C端用户(仅自己产品下自己的资料) / product_admin=产品管理员(产品内全部) / super_admin=生态超管(可跨产品)
+TENANT_SALT = "kb.product.tenant"  # 兼容保留：现契约已迁移到标准 JWT，salt 不再参与签名
 ROLE_USER = "user"
 ROLE_PRODUCT_ADMIN = "product_admin"
 ROLE_SUPER_ADMIN = "super_admin"
 _ROLES = (ROLE_USER, ROLE_PRODUCT_ADMIN, ROLE_SUPER_ADMIN)
+
+
+def _secret() -> str:
+    secret = str(CONFIG.get('PRODUCT_TENANT_SECRET', '') or '')
+    if not secret:
+        raise AppAuthenticationFailed(1500, _("产品租户上下文未配置（PRODUCT_TENANT_SECRET）"))
+    return secret
+
+
+def _b64url_decode(segment: str) -> bytes:
+    return base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4))
+
+
+def _b64url_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _hmac_signature(signing_input: str, secret: str) -> str:
+    digest = hmac.new(secret.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256).digest()
+    return _b64url_encode(digest)
 
 
 @dataclass
@@ -50,32 +74,43 @@ class ProductTenantContext:
         return {"workspace_id": self.product_id, "owner_user_id": self.user_id}
 
 
-def _secret() -> str:
-    secret = str(CONFIG.get('PRODUCT_TENANT_SECRET', '') or '')
-    if not secret:
-        raise AppAuthenticationFailed(1500, _("产品租户上下文未配置（PRODUCT_TENANT_SECRET）"))
-    return secret
-
-
 def issue_product_tenant_token(product_id: str, user_id: str, role: str, expires_seconds: int = 300) -> str:
-    """供 Chaos 网关/联调测试签发；生产环境密钥只存于网关与本服务"""
+    """签发标准 JWT HS256（与 Chaos 网关 knowledge-gateway.ts 逐字节对齐）；
+    生产由网关持有共享密钥，此处供联调测试。"""
     if role not in _ROLES:
         raise ValueError(f"unknown tenant role: {role}")
-    payload = {"p": product_id, "u": user_id, "r": role, "exp": int(time.time()) + expires_seconds}
-    return signing.dumps(payload, key=_secret(), salt=TENANT_SALT)
+    now = int(time.time())
+    header = _b64url_encode(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(",", ":")).encode("utf-8"))
+    payload = _b64url_encode(
+        json.dumps(
+            {"productId": product_id, "userId": user_id, "role": role, "iat": now, "exp": now + expires_seconds},
+            separators=(",", ":"),
+        ).encode("utf-8")
+    )
+    return f"{header}.{payload}.{_hmac_signature(f'{header}.{payload}', _secret())}"
 
 
 def parse_product_tenant_token(token: str) -> ProductTenantContext:
     try:
-        payload = signing.loads(token, key=_secret(), salt=TENANT_SALT)
+        header_b64, payload_b64, signature = token.split(".")
+        if not hmac.compare_digest(signature, _hmac_signature(f"{header_b64}.{payload_b64}", _secret())):
+            raise ValueError("bad signature")
+        header = json.loads(_b64url_decode(header_b64))
+        if header.get("alg") != "HS256":
+            raise ValueError("bad alg")
+        payload = json.loads(_b64url_decode(payload_b64))
+    except AppAuthenticationFailed:
+        raise
     except Exception:
         raise AppAuthenticationFailed(1401, _("租户上下文无效"))
-    if not isinstance(payload, dict) or int(payload.get('exp', 0)) < time.time():
+    if not isinstance(payload, dict) or int(payload.get("exp", 0)) < time.time():
         raise AppAuthenticationFailed(1401, _("租户上下文已过期"))
-    role = payload.get('r', ROLE_USER)
-    if role not in _ROLES or not payload.get('p') or not payload.get('u'):
+    role = payload.get("role") or payload.get("r") or ROLE_USER
+    product_id = payload.get("productId") or payload.get("p")
+    user_id = payload.get("userId") or payload.get("u")
+    if role not in _ROLES or not product_id or not user_id:
         raise AppAuthenticationFailed(1401, _("租户上下文字段非法"))
-    return ProductTenantContext(product_id=payload['p'], user_id=payload['u'], role=role)
+    return ProductTenantContext(product_id=product_id, user_id=user_id, role=role)
 
 
 class ProductTenantAuthentication(TokenAuthentication):
