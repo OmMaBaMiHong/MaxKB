@@ -84,6 +84,12 @@ class PdfSplitHandle(BaseSplitHandle):
 
                 # 没有目录的pdf
                 content = self.handle_pdf_content(file, pdf_document, save_image)
+                # 产品改造（M2）：文本层无实质文字（空/仅图片引用）= 扫描件或图片版 PDF，
+                # 回退 DeepDoc OCR 逐页识别
+                import re as _re
+
+                if not _re.sub(r"!\[[^\]]*\]\([^)]*\)", "", content).strip():
+                    content = self.handle_scanned_pdf_content(temp_file_path)
 
                 if pattern_list is not None and len(pattern_list) > 0:
                     split_model = SplitModel(pattern_list, with_filter, limit)
@@ -97,6 +103,29 @@ class PdfSplitHandle(BaseSplitHandle):
             os.remove(temp_file_path)
 
         return {"name": file.name, "content": split_model.parse(content)}
+
+    @staticmethod
+    def handle_scanned_pdf_content(pdf_path: str) -> str:
+        """扫描件回退：pymupdf 逐页渲染成图 → DeepDoc OCR → 文本按页拼接。"""
+        import pymupdf
+
+        from common.handle.impl.text.deepdoc_ocr import ocr_to_text
+
+        parts = []
+        with pymupdf.open(pdf_path) as doc:
+            for page_index, page in enumerate(doc, start=1):
+                pix = page.get_pixmap(dpi=200)
+                image = pix.tobytes("ppm")
+                import cv2
+                import numpy as np
+
+                image = cv2.imdecode(np.frombuffer(image, np.uint8), cv2.IMREAD_COLOR)
+                if image is None:
+                    continue
+                text = ocr_to_text(image)
+                if text.strip():
+                    parts.append(f"## 第 {page_index} 页\n\n" + text)
+        return "\n\n".join(parts)
 
     @staticmethod
     def handle_pdf_content(file, pdf_document, save_image):

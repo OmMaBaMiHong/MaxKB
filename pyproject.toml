@@ -74,6 +74,7 @@ dependencies = [
     "hanziconv>=0.3.2",
     "shapely>=2.2.0",
     "pyclipper>=1.4.0",
+    "pymupdf>=1.28.2",
 ]
 
 [tool.uv]
