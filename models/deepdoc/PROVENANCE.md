@@ -31,3 +31,14 @@
 cd models/deepdoc && shasum -a 256 det.onnx layout.onnx rec.onnx ocr.res
 # 与上表 SHA256 比对，不一致 = 权重被篡改或版本漂移，禁止上线
 ```
+
+## 代码吸收记录（2026-10-10）
+
+- **吸收源**：RAGFlow v0.27.2（commit tag v0.27.2）`deepdoc/vision/` 推理栈 → 本仓 `apps/deepdoc/vision/`
+- **许可**：Apache-2.0（文件头保留 InfiniFlow 版权声明）；上游仓库账目：models/deepdoc 权重 + apps/deepdoc 代码同源于 InfiniFlow/deepdoc 生态
+- **适配改动**（差异仅此三项，其余保持上游原样）：
+  1. `common.*` / `rag.*` 上游导入 → `deepdoc/compat/` 本地兼容层（file_utils/misc_utils/settings/lazy_image/rag_tokenizer；rag_tokenizer 吸收自 v0.15.1 自包含版，避免引入 infinity SDK）
+  2. `OCR.__init__`：移除"不传目录自动 HF 下载"分支（混沌海由 models/deepdoc 留痕流程管理权重）
+  3. nltk 未安装时英文词干化优雅降级（中文路径不受影响；nltk 数据包不入部署依赖）
+- **附带资源**：`apps/deepdoc/rag/res/huqie.txt`（分词增强词典）上游 v0.27.2 已不含此文件，缺失时 datrie 空词典兜底、识别不受影响；如后续需要可从更早 tag 补
+- **新增 Python 依赖**：onnxruntime / opencv-python-headless / pdfplumber / python-pptx / beartype / shapely / pyclipper / datrie / hanziconv（见 pyproject.toml）
