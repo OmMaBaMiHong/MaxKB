@@ -100,7 +100,13 @@ def dev():
 
 
 if __name__ == '__main__':
-    # 产品改造：/opt/maxkb-app 为容器内布局；容器外开发回落到仓库内 .runtime，
+    # 产品改造：先加载 .env 再做密钥/路径 setdefault。
+    # 原顺序会把随机 MAXKB_SECRET_KEY 提前注入进程，const.py 的 load_dotenv 不覆盖已有值，
+    # 导致 api 与 celery worker 各持随机密钥、任务 HMAC 验签必然失败（仅无注入 env 的开发模式暴露）
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    # /opt/maxkb-app 为容器内布局；容器外开发回落到仓库内 .runtime，
     # 已有环境变量时（安装器/部署注入）不覆盖
     if not os.environ.get('HF_HOME'):
         os.environ['HF_HOME'] = (
