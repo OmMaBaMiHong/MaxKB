@@ -54,22 +54,42 @@ class ProductDocumentView(APIView):
         content = str(payload.get("content") or "")
         if not name:
             raise AppApiException(500, _("文档名称不能为空"))
-        if not content.strip():
+        raw_paragraphs = payload.get("paragraphs")
+        if not content.strip() and not (isinstance(raw_paragraphs, list) and raw_paragraphs):
             raise AppApiException(500, _("文档内容不能为空"))
         # MaxKB 的 @post 钩子在创建后会触发向量化，模型未绑定时会抛错——前置拦截给出明确指引
         if knowledge.embedding_model_id is None:
             raise AppApiException(400, _("该知识库尚未绑定向量化模型，请先绑定模型再上传文档"))
-        # 领域切分（M2）：split.mode=tcm 走中医条文/方剂切分模板，块标题携带 书名·卷·篇·条号
-        split = payload.get("split") or {}
-        if isinstance(split, dict) and split.get("mode") == "tcm":
-            paragraphs = tcm_split(
-                content,
-                book=str(split.get("book") or name)[:64],
-                juan=str(split.get("juan") or ""),
-                pian=str(split.get("pian") or ""),
-            )
+        # 预切分直灌（对接已拆完的内容，如 Skoob 章节）：paragraphs=[{title,content}] 原样过管线，
+        # 不做二次切分；每段 title 即证据标题（如 "第12章 章节名"）。上限 2000 段防滥用。
+        if isinstance(raw_paragraphs, list) and raw_paragraphs:
+            if len(raw_paragraphs) > 2000:
+                raise AppApiException(500, _("单文档段落上限 2000，请按卷拆分文档"))
+            paragraphs = []
+            for item in raw_paragraphs:
+                if not isinstance(item, dict):
+                    continue
+                piece_content = str(item.get("content") or "").strip()
+                if not piece_content:
+                    continue
+                paragraphs.append({
+                    "title": str(item.get("title") or "")[:256],
+                    "content": piece_content[:102400],
+                })
+            if not paragraphs:
+                raise AppApiException(500, _("paragraphs 内没有有效内容"))
         else:
-            paragraphs = get_split_model("web.md").parse(content)
+            # 领域切分（M2）：split.mode=tcm 走中医条文/方剂切分模板，块标题携带 书名·卷·篇·条号
+            split = payload.get("split") or {}
+            if isinstance(split, dict) and split.get("mode") == "tcm":
+                paragraphs = tcm_split(
+                    content,
+                    book=str(split.get("book") or name)[:64],
+                    juan=str(split.get("juan") or ""),
+                    pian=str(split.get("pian") or ""),
+                )
+            else:
+                paragraphs = get_split_model("web.md").parse(content)
         # 委托既有管线：段落切分、问题关联、@post 向量化（celery 异步）。
         # 注意：@post 装饰后 save() 返回单个 detail dict；且本函数不得再用 `_` 作解包名（会遮蔽 gettext 的 `_`）
         detail = DocumentSerializers.Create(
