@@ -4,6 +4,7 @@ from django.urls import path
 
 from .views.product_document import ProductDocumentOperateView, ProductDocumentView
 from .views.product_knowledge import ProductKnowledgeOperateView, ProductKnowledgeView
+from .views.product_graph import ProductGraphBuildView, ProductGraphView
 from .views.product_search import ProductSearchView
 
 app_name = "product_knowledge"
@@ -14,4 +15,6 @@ urlpatterns = [
     path("knowledge/<str:knowledge_id>/documents", ProductDocumentView.as_view()),
     path("knowledge/<str:knowledge_id>/documents/<str:document_id>", ProductDocumentOperateView.as_view()),
     path("knowledge/<str:knowledge_id>/search", ProductSearchView.as_view()),
+    path("knowledge/<str:knowledge_id>/graph", ProductGraphView.as_view()),
+    path("knowledge/<str:knowledge_id>/graph/build", ProductGraphBuildView.as_view()),
 ]

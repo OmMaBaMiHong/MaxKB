@@ -518,3 +518,48 @@ class PublicFileAccess(AppModelMixin):
         indexes = [
             models.Index(fields=['source_type', 'source_id']),
         ]
+
+
+class GraphNode(AppModelMixin):
+    """
+    知识图谱节点（M3，混沌海）：实体 — PG 邻接表方案。
+    隔离 = 矩阵租户（workspace_id 产品 × knowledge 归属）；source_paragraph_ids 留证据引用。
+    """
+
+    id = models.UUIDField(primary_key=True, max_length=128, default=uuid.uuid7, editable=False, verbose_name="主键id")
+    knowledge = models.ForeignKey(Knowledge, on_delete=models.DO_NOTHING, db_constraint=False, verbose_name="知识库")
+    workspace_id = models.CharField(max_length=64, default="default", db_index=True, verbose_name="产品id")
+    name = models.CharField(max_length=150, verbose_name="实体名", db_index=True)
+    type = models.CharField(max_length=32, default="概念", verbose_name="实体类型", db_index=True)
+    description = models.CharField(max_length=2048, default="", verbose_name="实体描述")
+    mention_count = models.IntegerField(default=0, verbose_name="提及次数")
+    source_paragraph_ids = models.JSONField(default=list, verbose_name="证据段落id")
+
+    class Meta:
+        db_table = "graph_node"
+        unique_together = [["knowledge", "name"]]
+        indexes = [
+            models.Index(fields=["workspace_id", "type"], name="graph_node_ws_type_idx"),
+        ]
+
+
+class GraphEdge(AppModelMixin):
+    """
+    知识图谱边（M3）：实体间关系，同样矩阵租户隔离。
+    """
+
+    id = models.UUIDField(primary_key=True, max_length=128, default=uuid.uuid7, editable=False, verbose_name="主键id")
+    knowledge = models.ForeignKey(Knowledge, on_delete=models.DO_NOTHING, db_constraint=False, verbose_name="知识库")
+    workspace_id = models.CharField(max_length=64, default="default", db_index=True, verbose_name="产品id")
+    source_node = models.ForeignKey(GraphNode, on_delete=models.DO_NOTHING, db_constraint=False, related_name="out_edges", verbose_name="源节点")
+    target_node = models.ForeignKey(GraphNode, on_delete=models.DO_NOTHING, db_constraint=False, related_name="in_edges", verbose_name="目标节点")
+    relation = models.CharField(max_length=64, default="相关", verbose_name="关系类型")
+    description = models.CharField(max_length=2048, default="", verbose_name="关系描述")
+    source_paragraph_ids = models.JSONField(default=list, verbose_name="证据段落id")
+
+    class Meta:
+        db_table = "graph_edge"
+        unique_together = [["knowledge", "source_node", "target_node", "relation"]]
+        indexes = [
+            models.Index(fields=["workspace_id", "relation"], name="graph_edge_ws_rel_idx"),
+        ]

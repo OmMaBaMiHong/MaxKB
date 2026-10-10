@@ -29,7 +29,9 @@ from models_provider.models import Model  # noqa: E402
 
 SKOOB_BOOKS = Path(os.environ.get("SKOOB_BOOKS_DIR", "/Users/wade/work-space/skoob/books"))
 BASE = "http://127.0.0.1:8080/product-api/api"
-P, U = "pilot-gmoney", "u1001"
+# 工作空间可通过环境变量覆盖：默认 default（管理端可见，graph 演示用）
+P = os.environ.get("IMPORT_PRODUCT", "default")
+U = os.environ.get("IMPORT_USER", "admin")
 
 book_dir = SKOOB_BOOKS / (sys.argv[1] if len(sys.argv) > 1 else "觉醒-s级寝管-开局十万张床")
 meta = json.loads((book_dir / "book.json").read_text(encoding="utf-8"))

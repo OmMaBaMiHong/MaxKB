@@ -27,7 +27,9 @@ from common.handle.impl.table.xlsx_parse_table_handle import XlsxParseTableHandl
 from common.handle.impl.text.csv_split_handle import CsvSplitHandle
 from common.handle.impl.text.doc_split_handle import DocSplitHandle
 from common.handle.impl.text.html_split_handle import HTMLSplitHandle
+from common.handle.impl.text.image_split_handle import ImageSplitHandle
 from common.handle.impl.text.pdf_split_handle import PdfSplitHandle
+from common.handle.impl.text.pptx_split_handle import PptxSplitHandle
 from common.handle.impl.text.text_split_handle import TextSplitHandle
 from common.handle.impl.text.xls_split_handle import XlsSplitHandle
 from common.handle.impl.text.xlsx_split_handle import XlsxSplitHandle
@@ -97,6 +99,8 @@ split_handles = [
     HTMLSplitHandle(),
     DocSplitHandle(),
     PdfSplitHandle(),
+    ImageSplitHandle(),
+    PptxSplitHandle(),
     XlsxSplitHandle(),
     XlsSplitHandle(),
     CsvSplitHandle(),

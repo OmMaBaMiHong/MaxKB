@@ -86,6 +86,21 @@ export default defineConfig((conf: any) => {
     base: './',
     envDir: envDir,
     plugins: [
+      {
+        // 混沌海：dev 下 /graph 等直访路径回退到 admin.html（生产由部署层 fallback 处理）
+        name: 'chaossea-history-fallback',
+        configureServer(server: any) {
+          server.middlewares.use((req: any, _res: any, next: any) => {
+            if (req.url && !req.url.includes('.') && !req.url.startsWith('/@') && !req.url.startsWith('/admin/api') && !req.url.startsWith('/chat/api')) {
+              const first = req.url.slice(1).split('/')[0]
+              if (first && !['admin.html', 'chat.html'].includes(first)) {
+                req.url = '/admin.html'
+              }
+            }
+            next()
+          })
+        },
+      },
       vue(),
       vueJsx(),
       DefineOptions(),
