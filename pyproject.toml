@@ -64,7 +64,16 @@ dependencies = [
     "jsonpath-ng==1.8.0",
     "markdownify==1.2.2",
     "polib==1.2.0",
-    "cryptography==50.0.0"
+    "cryptography==50.0.0",
+    "onnxruntime>=1.31.0",
+    "opencv-python-headless>=4.11.0.86",
+    "beartype>=0.23.0",
+    "pdfplumber>=0.11.10",
+    "python-pptx>=1.0.2",
+    "datrie>=0.8.3",
+    "hanziconv>=0.3.2",
+    "shapely>=2.2.0",
+    "pyclipper>=1.4.0",
 ]
 
 [tool.uv]
