@@ -1,5 +1,6 @@
 export default {
   title: '知识库',
+  graph: '知识图谱',
   document_count: '文档数',
   relatedApp_count: '关联智能体',
   setting: {
