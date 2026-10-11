@@ -1,5 +1,6 @@
 export default {
   title: 'Knowledge',
+  graph: 'Knowledge Graph',
   relatedApplications: 'Linked Agent',
   document_count: 'docs',
   relatedApp_count: 'linked agents',
