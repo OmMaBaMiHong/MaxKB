@@ -472,6 +472,40 @@ const DocumentRouter = {
       component: () => import('@/views/hit-test/index.vue'),
     },
     {
+      path: 'graph',
+      name: 'KnowledgeGraph',
+      meta: {
+        icon: 'app-document',
+        title: 'views.knowledge.graph',
+        active: 'graph',
+        parentPath: '/knowledge/:id/:folderId/:type',
+        parentName: 'KnowledgeDetail',
+        group: 'KnowledgeDetail',
+        permission: [
+          () => {
+            const to: any = get_next_route()
+            if (to.params.folderId == 'shared') {
+              return RoleConst.ADMIN
+            } else if (to.params.folderId == 'resource-management') {
+              return RoleConst.ADMIN
+            } else {
+              return new ComplexPermission(
+                [RoleConst.USER],
+                [
+                  PermissionConst.KNOWLEDGE.getKnowledgeWorkspaceResourcePermission(
+                    to ? to.params.id : '',
+                  ),
+                ],
+                [],
+                'AND',
+              )
+            }
+          },
+        ],
+      },
+      component: () => import('@/views/knowledge/component/KnowledgeGraph.vue'),
+    },
+    {
       path: 'chat-user',
       name: 'KnowledgeChatUser',
       meta: {
